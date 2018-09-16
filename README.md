@@ -8,7 +8,7 @@ evolutionary algorithms as described in [1].
 
 ## Instalation
 
-   1. Install [(stack)[https://github.com/commercialhaskell/stack]].
+   1. Install (https://github.com/commercialhaskell/stack)[stack].
    2. `stack install`
 
 ## Usage
