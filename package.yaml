@@ -1,0 +1,32 @@
+name:                nqueens
+version:             0.1.0.0
+github:              "groscoe/nqueens"
+license:             MIT
+author:              "Gustavo Roscoe"
+maintainer:          "gustavo@gustavoroscoe.com"
+copyright:           "2018 Gustavo Roscoe"
+
+extra-source-files:
+- README.md
+
+description:         Please see the README on GitHub at <https://github.com/groscoe/nqueens#readme>
+
+dependencies:
+  - base >= 4.7 && < 5
+  - MonadRandom
+  - random-shuffle
+  - split
+
+library:
+  source-dirs: src
+
+executables:
+  nqueens-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - nqueens
