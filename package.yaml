@@ -21,7 +21,7 @@ library:
   source-dirs: src
 
 executables:
-  nqueens-exe:
+  nqueens:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
