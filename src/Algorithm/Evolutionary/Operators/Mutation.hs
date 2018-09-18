@@ -5,9 +5,9 @@ module Algorithm.Evolutionary.Operators.Mutation (
 import Control.Monad.Random.Class
 
 swapAlleles :: MonadRandom m => Int -> Double -> [a] -> m [a]
-swapAlleles n mutationProbability individual = do
+swapAlleles numGenes mutationProbability individual = do
   p <- getRandomR (0, 1.0)
-  [i, j] <- take 2 <$> getRandomRs (1, n)
+  [i, j] <- take 2 <$> getRandomRs (1, numGenes)
   pure $ if p <= mutationProbability
          then individual
          else swap i j individual

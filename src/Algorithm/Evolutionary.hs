@@ -50,7 +50,7 @@ minimumOn :: Ord b => (a -> b) -> [a] -> a
 minimumOn f = head . sortOn f
 
 
-solve :: (MonadRandom m, MonadIO m, Ord n, Num n, Show n)
+solve :: (MonadRandom m, MonadIO m, Real n, Show n)
       => m ind
       -> (ind -> n)
       -> (Population ind -> m [ind])

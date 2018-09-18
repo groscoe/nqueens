@@ -9,10 +9,10 @@ import Data.List (sortOn)
 
 import Algorithm.Evolutionary.Internals.Population
 
-shuffleAndSelect :: (MonadRandom m, Ord n, Num n) => (ind -> n) -> Int -> Population ind -> m [ind]
+shuffleAndSelect :: (MonadRandom m, Real n) => (ind -> n) -> Int -> Population ind -> m [ind]
 shuffleAndSelect fitnessFunction numParents =
   fmap (take numParents . sortOn fitnessFunction . take (2 * numParents)) . shuffleM . getPopulation
 
-dropWeakest :: (Applicative m, Ord n, Num n) => (ind -> n) -> Int -> Population ind -> m [ind]
+dropWeakest :: (Applicative m, Real n) => (ind -> n) -> Int -> Population ind -> m [ind]
 dropWeakest fitness numToDrop =
   pure . drop numToDrop . sortOn (negate . fitness) . getPopulation
