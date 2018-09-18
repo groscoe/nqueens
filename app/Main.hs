@@ -1,5 +1,6 @@
 module Main where
 
+import Data.Maybe (fromMaybe)
 import System.Environment (getArgs)
 import Text.Read (readMaybe)
 
@@ -19,6 +20,4 @@ main = do
 
   where defaultN = 50
         getNFromArgs [] = defaultN -- default value
-        getNFromArgs (arg:_) = case readMaybe arg of
-          Nothing -> defaultN
-          Just m -> m
+        getNFromArgs (arg:_) = fromMaybe defaultN (readMaybe arg)

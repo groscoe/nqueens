@@ -1,25 +1,24 @@
-module GeneralEvolutionary (Population (..), solve) where
+module Algorithm.Evolutionary (
+  Population,
+  mkPopulation,
+  getPopulation,
+  solve
+  ) where
 
+import Data.Functor
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Random.Class
 import Data.List (sortOn)
 import Data.List.Split (chunksOf)
-import System.Random.Shuffle (shuffleM)
+
+import Algorithm.Evolutionary.Internals.Population
 
 
-newtype Population genotype = Population { getPopulation :: [genotype] }
-  deriving (Ord, Eq, Show)
-
-
-initialise :: (Enum n, Num n, Applicative m) => m genotype -> n -> m (Population genotype)
+initialise :: Applicative m => m genotype -> Int -> m (Population genotype)
 initialise generateIndividual populationSize =
-  Population <$> traverse (const generateIndividual) [1..populationSize]
+  mkPopulation <$> replicateM populationSize generateIndividual
 
-
-selectParents :: (MonadRandom m, Ord n) => Int -> (a -> n) -> Population a -> m [a]
-selectParents numParents fitness (Population p) =
-  take numParents . sortOn fitness . take (numParents * 2) <$> shuffleM p
 
 
 recombine :: Monad m => (ind -> ind -> m [a]) -> [ind] -> m [a]
@@ -35,26 +34,23 @@ mutate = traverse
 
 
 selectNextGen :: (Num n, Ord n, Applicative m) => (ind -> n) -> Int -> Population ind -> m (Population ind)
-selectNextGen fitness numOffspring (Population p) =
-  pure . Population . drop numOffspring . sortOn (negate . fitness) $ p
+selectNextGen fitness numOffspring =
+  pure . mkPopulation . drop numOffspring . sortOn (negate . fitness) . getPopulation
 
 
 nextGeneration :: (MonadRandom m, Ord n, Num n)
                => (ind -> n)
-               -> Int
+               -> (Population ind -> m [ind])
                -> (ind -> ind -> m [ind])
                -> (ind -> m ind)
                -> Population ind
                -> m (Population ind)
-nextGeneration fitness numParents mateCouple mutateIndividual population = do
-  parents <- selectParents numParents fitness population
+nextGeneration fitness selectParents mateCouple mutateIndividual pop = do
+  parents <- selectParents pop
   offspring <- recombine mateCouple parents >>= mutate mutateIndividual
-  let newPopulation = Population (getPopulation population ++ offspring)
+  let newPopulation = mkPopulation (getPopulation pop ++ offspring)
   selectNextGen fitness (length offspring) newPopulation
 
-
-finished :: (Eq n, Num n) => (ind -> n) -> Population ind -> Bool
-finished fitness (Population p) = any ((== 0) . fitness) p
 
 
 minimumOn :: Ord b => (a -> b) -> [a] -> a
@@ -64,22 +60,23 @@ minimumOn f = head . sortOn f
 solve :: (MonadRandom m, MonadIO m, Ord n, Num n, Show n)
       => m ind
       -> (ind -> n)
-      -> Int
+      -> (Population ind -> m [ind])
       -> (ind -> ind -> m [ind])
       -> (ind -> m ind)
       -> Int
       -> Int
+      -> (Population ind -> Bool)
       -> m ind
-solve generateIndividual fitness numParents mateCouple mutateIndividual populationSize maxIters =
+solve generateIndividual fitness selectParents mateCouple mutateIndividual populationSize maxIters finished =
   initialise generateIndividual populationSize >>= fmap (minimumOn fitness . getPopulation) . go 1 1
-    where go gen iter pop
-            | finished fitness pop =
-              liftIO $ putStrLn (unlines ["Finished", "Population: " ++ show gen, "Generation: " ++ show iter]) *> pure pop
-            | iter >= maxIters =
+  where go gen iter pop
+          | finished pop =
+              liftIO $ putStrLn (unlines ["Finished", "Population: " ++ show gen, "Generation: " ++ show iter]) $> pop
+          | iter >= maxIters =
               liftIO (putStrLn "Trying a new population") *> initialise generateIndividual populationSize >>= go (gen + 1) 1
-            | otherwise =
+          | otherwise =
               when (iter `rem` 500 == 0)
               (liftIO . putStrLn $ unlines [
                   "Generation: " ++ show iter,
                   "Best result: " ++ show (minimum . fmap fitness $ getPopulation pop)])
-              *> nextGeneration fitness numParents mateCouple mutateIndividual pop >>= go gen (iter + 1)
+              *> nextGeneration fitness selectParents mateCouple mutateIndividual pop >>= go gen (iter + 1)
