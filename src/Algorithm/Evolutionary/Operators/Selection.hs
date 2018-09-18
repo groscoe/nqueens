@@ -1,6 +1,6 @@
 module Algorithm.Evolutionary.Operators.Selection (
   shuffleAndSelect,
-  selectFittest
+  dropWeakest
   ) where
 
 import Control.Monad.Random.Class
@@ -13,6 +13,6 @@ shuffleAndSelect :: (MonadRandom m, Ord n, Num n) => (ind -> n) -> Int -> Popula
 shuffleAndSelect fitnessFunction numParents =
   fmap (take numParents . sortOn fitnessFunction . take (2 * numParents)) . shuffleM . getPopulation
 
-selectFittest :: Applicative m => Ord n => (ind -> n) -> Int -> Population ind -> m [ind]
-selectFittest fitness numSurvivors =
-  pure . take numSurvivors . sortOn fitness . getPopulation
+dropWeakest :: (Applicative m, Ord n, Num n) => (ind -> n) -> Int -> Population ind -> m [ind]
+dropWeakest fitness numToDrop =
+  pure . drop numToDrop . sortOn (negate . fitness) . getPopulation

@@ -5,7 +5,7 @@ import Control.Monad.Random.Class
 import Data.List (transpose, intercalate)
 import System.Random.Shuffle
 
-import Algorithm.Evolutionary.Operators.Selection (shuffleAndSelect, selectFittest)
+import Algorithm.Evolutionary.Operators.Selection (shuffleAndSelect, dropWeakest)
 import Algorithm.Evolutionary.Operators.Mutation (swapAlleles)
 import Algorithm.Evolutionary.Operators.Recombination (cutAndCrossFill)
 import Algorithm.Evolutionary
@@ -36,8 +36,8 @@ mateCouple parent1 parent2 = do
   pure [child1, child2]
 
 
-selectSurvivors :: Applicative m => Int -> Int -> Population Board -> m [Board]
-selectSurvivors n = selectFittest (fitness n)
+selectSurvivors :: Applicative m => Int -> Population Board -> m [Board]
+selectSurvivors n = dropWeakest (fitness n) 2
 
 
 finished :: Int -> Population Board -> Bool
@@ -54,7 +54,7 @@ solveNQueens popSize n =
           (selectParents n)
           mateCouple
           (swapAlleles n mutationProbability)
-          (selectSurvivors n popSize)
+          (selectSurvivors n)
           popSize
           maxIters
           (finished n)

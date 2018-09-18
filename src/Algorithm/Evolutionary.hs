@@ -20,10 +20,9 @@ initialise generateIndividual populationSize =
   mkPopulation <$> replicateM populationSize generateIndividual
 
 
-
 recombine :: Monad m => (ind -> ind -> m [a]) -> [ind] -> m [a]
 recombine mateCouple parents =
-  fmap concat . mapM (uncurry mateCouple) $ pairs (parents ++ reverse parents)
+  fmap concat . mapM (uncurry mateCouple) $ pairs parents
   where pairs = foldr makePair [] . chunksOf 2
         makePair [x,y] acc = (x, y) : acc
         makePair _ acc = acc
@@ -33,7 +32,7 @@ mutate :: (MonadRandom m, Traversable t) => (ind -> m ind) -> t ind -> m (t ind)
 mutate = traverse
 
 
-nextGeneration :: MonadRandom m
+nextGeneration :: (MonadRandom m, MonadIO m)
                => (Population ind -> m [ind])
                -> (ind -> ind -> m [ind])
                -> (ind -> m ind)
@@ -69,7 +68,7 @@ solve generateIndividual fitness selectParents mateCouple mutateIndividual selec
               liftIO
               $ putStrLn (unlines ["Finished",
                                    "Population: " ++ show gen,
-                                   "Generation: " ++ show iter, show (length $ getPopulation pop)])
+                                   "Generation: " ++ show iter])
               $> pop
           | iter >= maxIters =
               liftIO (putStrLn "Trying a new population") *> initialise generateIndividual populationSize >>= go (gen + 1) 1
