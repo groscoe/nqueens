@@ -5,7 +5,7 @@ import Control.Monad.Random.Class
 import Data.List (transpose, intercalate)
 import System.Random.Shuffle
 
-import Algorithm.Evolutionary.Operators.Selection (shuffleAndSelect)
+import Algorithm.Evolutionary.Operators.Selection (shuffleAndSelect, selectFittest)
 import Algorithm.Evolutionary.Operators.Mutation (swapAlleles)
 import Algorithm.Evolutionary.Operators.Recombination (cutAndCrossFill)
 import Algorithm.Evolutionary
@@ -26,7 +26,7 @@ fitness _ _ = 0
 
 
 selectParents :: (MonadRandom m) => Int -> Population Board -> m [Board]
-selectParents n = shuffleAndSelect 2 (fitness n)
+selectParents n = shuffleAndSelect (fitness n) 2
 
 
 mateCouple :: MonadRandom m => Board -> Board -> m [Board]
@@ -36,13 +36,16 @@ mateCouple parent1 parent2 = do
   pure [child1, child2]
 
 
+selectSurvivors :: Applicative m => Int -> Int -> Population Board -> m [Board]
+selectSurvivors n = selectFittest (fitness n)
+
 
 finished :: Int -> Population Board -> Bool
 finished n = any ((== 0) . fitness n) . getPopulation
 
 
 solveNQueens :: (MonadIO m, MonadRandom m) => Int -> Int -> m Board
-solveNQueens populationSize n =
+solveNQueens popSize n =
   let maxIters = 10000
       mutationProbability = 0.8
   in
@@ -51,7 +54,8 @@ solveNQueens populationSize n =
           (selectParents n)
           mateCouple
           (swapAlleles n mutationProbability)
-          populationSize
+          (selectSurvivors n popSize)
+          popSize
           maxIters
           (finished n)
 
