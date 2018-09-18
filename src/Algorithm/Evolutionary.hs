@@ -20,6 +20,7 @@ initialise generateIndividual populationSize =
   mkPopulation <$> replicateM populationSize generateIndividual
 
 
+
 recombine :: Monad m => (ind -> ind -> m [a]) -> [ind] -> m [a]
 recombine mateCouple parents =
   fmap concat . mapM (uncurry mateCouple) $ pairs (parents ++ reverse parents)
@@ -32,18 +33,28 @@ mutate :: (MonadRandom m, Traversable t) => (ind -> m ind) -> t ind -> m (t ind)
 mutate = traverse
 
 
-nextGeneration :: (MonadRandom m)
-               => (Population ind -> m [ind])
+selectNextGen :: (Num n, Ord n, Applicative m) => (ind -> n) -> Int -> Population ind -> m (Population ind)
+selectNextGen fitness numOffspring =
+  pure . mkPopulation . drop numOffspring . sortOn (negate . fitness) . getPopulation
+
+
+nextGeneration :: (MonadRandom m, Ord n, Num n)
+               => (ind -> n)
+               -> (Population ind -> m [ind])
                -> (ind -> ind -> m [ind])
                -> (ind -> m ind)
-               -> (Population ind -> m (Population ind))
                -> Population ind
                -> m (Population ind)
-nextGeneration selectParents mateCouple mutateIndividual selectSurvivors pop = do
+nextGeneration fitness selectParents mateCouple mutateIndividual pop = do
   parents <- selectParents pop
-  offspring <- mutate mutateIndividual =<< recombine mateCouple parents
+  offspring <- recombine mateCouple parents >>= mutate mutateIndividual
   let newPopulation = mkPopulation (getPopulation pop ++ offspring)
-  selectSurvivors newPopulation
+  selectNextGen fitness (length offspring) newPopulation
+
+
+
+minimumOn :: Ord b => (a -> b) -> [a] -> a
+minimumOn f = head . sortOn f
 
 
 solve :: (MonadRandom m, MonadIO m, Ord n, Num n, Show n)
@@ -52,12 +63,11 @@ solve :: (MonadRandom m, MonadIO m, Ord n, Num n, Show n)
       -> (Population ind -> m [ind])
       -> (ind -> ind -> m [ind])
       -> (ind -> m ind)
-      -> (Population ind -> m (Population ind))
       -> Int
       -> Int
       -> (Population ind -> Bool)
       -> m ind
-solve generateIndividual fitness selectParents mateCouple mutateIndividual selectSurvivors populationSize maxIters finished =
+solve generateIndividual fitness selectParents mateCouple mutateIndividual populationSize maxIters finished =
   initialise generateIndividual populationSize >>= fmap (minimumOn fitness . getPopulation) . go 1 1
   where go gen iter pop
           | finished pop =
@@ -69,8 +79,4 @@ solve generateIndividual fitness selectParents mateCouple mutateIndividual selec
               (liftIO . putStrLn $ unlines [
                   "Generation: " ++ show iter,
                   "Best result: " ++ show (minimum . fmap fitness $ getPopulation pop)])
-              *> nextGeneration selectParents mateCouple mutateIndividual selectSurvivors pop
-              >>= go gen (iter + 1)
-
-        minimumOn :: Ord b => (a -> b) -> [a] -> a
-        minimumOn f = head . sortOn f
+              *> nextGeneration fitness selectParents mateCouple mutateIndividual pop >>= go gen (iter + 1)
