@@ -2,10 +2,10 @@ module NQueens (solveNQueens, showBoard) where
 
 import Control.Monad.IO.Class
 import Control.Monad.Random.Class
-import Data.List (transpose, intercalate)
+import Data.List (transpose, intercalate, tails)
 import System.Random.Shuffle
 
-import Algorithm.Evolutionary.Operators.Selection (shuffleAndSelect)
+import Algorithm.Evolutionary.Operators.Selection (shuffleAndSelect, selectNFittest)
 import Algorithm.Evolutionary.Operators.Mutation (swapAlleles)
 import Algorithm.Evolutionary.Operators.Recombination (cutAndCrossFill)
 import Algorithm.Evolutionary
@@ -19,14 +19,14 @@ generateBoard n = shuffleM [1..n]
 
 
 fitness :: Int -> Board -> Int
-fitness n (column:columns) = numChecks column columns + fitness n columns
-  where numChecks y ys =
+fitness n board = sum (checksForQueen <$> tails board)
+  where checksForQueen (y:ys) =
           length . filter id $ zipWith (==) [y+1..n] ys ++ zipWith (==) [y-1, y-2..1] ys
-fitness _ _ = 0
+        checksForQueen _ = 0
 
 
 selectParents :: (MonadRandom m) => Int -> Population Board -> m [Board]
-selectParents n = shuffleAndSelect 2 (fitness n)
+selectParents n = shuffleAndSelect (fitness n) 2
 
 
 mateCouple :: MonadRandom m => Board -> Board -> m [Board]
@@ -36,13 +36,16 @@ mateCouple parent1 parent2 = do
   pure [child1, child2]
 
 
+selectSurvivors :: Applicative m => Int -> Int -> Population Board -> m (Population Board)
+selectSurvivors = selectNFittest . fitness
+
 
 finished :: Int -> Population Board -> Bool
 finished n = any ((== 0) . fitness n) . getPopulation
 
 
 solveNQueens :: (MonadIO m, MonadRandom m) => Int -> Int -> m Board
-solveNQueens populationSize n =
+solveNQueens popSize n =
   let maxIters = 10000
       mutationProbability = 0.8
   in
@@ -51,7 +54,8 @@ solveNQueens populationSize n =
           (selectParents n)
           mateCouple
           (swapAlleles n mutationProbability)
-          populationSize
+          (selectSurvivors (popSize - 2) n)
+          popSize
           maxIters
           (finished n)
 
