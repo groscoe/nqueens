@@ -25,6 +25,7 @@ recombine mateCouple parents =
   fmap concat . mapM (uncurry mateCouple) $ pairs parents
   where pairs = foldr makePair [] . chunksOf 2
         makePair [x,y] acc = (x, y) : acc
+        makePair [x] acc = (x, x) : acc
         makePair _ acc = acc
 
 

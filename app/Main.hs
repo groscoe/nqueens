@@ -1,23 +1,45 @@
 module Main where
 
-import Data.Maybe (fromMaybe)
-import System.Environment (getArgs)
-import Text.Read (readMaybe)
+import Options.Applicative
+import Data.Semigroup ((<>))
 
 import NQueens
 
+data Parameters = Params {
+  numberOfQueens :: Int,
+  populationSize :: Int,
+  maxIters :: Int
+}
+
 main :: IO ()
-main = do
-  args <- getArgs
-  let n = getNFromArgs args
-      populationSize = 20
+main = execParser opts >>= runNQueens
+  where opts = info (params <**> helper)
+          ( fullDesc
+         <> header "nqueens - solve the n-queens problem with evolutionary programming." )
+
+params :: Parser Parameters
+params = Params
+  <$> option auto
+    ( short 'n'
+   <> metavar "N"
+   <> help "Number of queens in the board"
+   <> showDefault
+   <> value 50)
+  <*> option auto
+    ( short 'p'
+   <> metavar "M"
+   <> help "Population size"
+   <> showDefault
+   <> value 20)
+  <*> option auto
+    ( short 'i'
+   <> metavar "K"
+   <> help "Number of iterations before giving up"
+   <> showDefault
+   <> value 10000)
+
+runNQueens :: Parameters -> IO ()
+runNQueens (Params n popSize iters) = do
   putStrLn $ "Solving the N-Queens problem with n = " ++ show n
-
-  solution <- solveNQueens populationSize n
-  putStrLn $ "Solution: " ++ show solution
-
+  solution <- solveNQueens popSize n iters
   putStrLn $ showBoard n solution
-
-  where defaultN = 50
-        getNFromArgs [] = defaultN -- default value
-        getNFromArgs (arg:_) = fromMaybe defaultN (readMaybe arg)

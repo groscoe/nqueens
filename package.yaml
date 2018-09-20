@@ -16,6 +16,7 @@ dependencies:
   - MonadRandom
   - random-shuffle
   - split
+  - optparse-applicative
 
 library:
   source-dirs: src

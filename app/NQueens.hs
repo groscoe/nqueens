@@ -44,10 +44,9 @@ finished :: Int -> Population Board -> Bool
 finished n = any ((== 0) . fitness n) . getPopulation
 
 
-solveNQueens :: (MonadIO m, MonadRandom m) => Int -> Int -> m Board
-solveNQueens popSize n =
-  let maxIters = 10000
-      mutationProbability = 0.8
+solveNQueens :: (MonadIO m, MonadRandom m) => Int -> Int -> Int -> m Board
+solveNQueens popSize n maxIters =
+  let mutationProbability = 0.8
   in
     solve (generateBoard n)
           (fitness n)
