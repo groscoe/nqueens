@@ -6,10 +6,11 @@ evolutionary computing course programming project. Of special interest is the
 GeneralEvolutionary module, which contains a generalized implementation of
 evolutionary algorithms as described in [1].
 
-## Instalation
+## Installation
 
-   1. Install [stack](https://github.com/commercialhaskell/stack).
-   2. `stack install`
+   1. Clone the repository (`git clone https://github.com/groscoe/nqueens.git`)
+   2. Install [stack](https://github.com/commercialhaskell/stack).
+   3. `stack install`
 
 ## Usage
 
