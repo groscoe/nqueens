@@ -17,9 +17,7 @@ dependencies:
   - random-shuffle
   - split
   - optparse-applicative
-
-library:
-  source-dirs: src
+  - evolutionary
 
 executables:
   nqueens:
@@ -30,5 +28,3 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     - -O2
-    dependencies:
-    - nqueens
