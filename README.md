@@ -1,10 +1,6 @@
 # nqueens - An evolutionary solution to the N-Queens problem.
 
-The purpose of this project is the study and implementation of evolutionary
-algorithms in a lazy functional language. The work here was developed from an
-evolutionary computing course programming project. Of special interest is the
-GeneralEvolutionary module, which contains a generalized implementation of
-evolutionary algorithms as described in [1].
+This project is an example for the [evolutionary](https://github.com/groscoe/evolutionary) library. It offers an evolutionary solution to the N-Queens problem as described in [1].
 
 ## Installation
 
